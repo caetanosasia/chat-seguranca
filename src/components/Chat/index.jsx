@@ -5,7 +5,6 @@ import  SHA256 from 'crypto-js/sha256';
 import AES from 'crypto-js/aes';
 import CTR from 'crypto-js/mode-ctr';
 import NoPadding from 'crypto-js/pad-zeropadding';
-import Hex from 'crypto-js/enc-hex';
 import _ from 'lodash';
 import UTF8 from 'crypto-js/enc-utf8';
 
