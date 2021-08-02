@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { pbkdf2 } from 'crypto-js';
+import CryptoJS from 'crypto-js';
+import Pbkdf2 from 'crypto-js/pbkdf2';
 import  SHA256 from 'crypto-js/sha256';
 import AES from 'crypto-js/aes';
 import CTR from 'crypto-js/mode-ctr';
@@ -7,25 +8,49 @@ import NoPadding from 'crypto-js/pad-zeropadding';
 import Hex from 'crypto-js/enc-hex';
 import UTF8 from 'crypto-js/enc-utf8';
 
-const key = Hex.parse("000102030405060708090a0b0c0d0e0f");
-const iv = Hex.parse("101112131415161718191a1b1c1d1e1f");
-
 const Chat = ({ msgs, setMsgs, name }) => {
   const [newMsg, setNewMsg] = useState('');
   const ref = useRef(null);
-
   const sendMsg = (event) => {
     event.preventDefault();
     const msg = {};
-    msg.encrypted = encrypt(newMsg);
-    msg.macMsg = SHA256(msg.encrypted.toString(), key);
-    setMsgs([...msgs, msg]);
+
+    // Gera salt aleatório para o Aes e uma chave usando a senha Admin
+    var saltAes = CryptoJS.lib.WordArray.random(128 / 8); 
+    var keyAes = Pbkdf2("qwey123", saltAes, { 
+      keySize: 128 / 32,
+      iterations: 1000
+    });
+
+    // Gera salt aleatório para o HMac e uma chave usando a senha Admin
+    var saltHMac = CryptoJS.lib.WordArray.random(128 / 8) 
+    var keyHMac = Pbkdf2("qwey123", saltHMac, { 
+      keySize: 128 / 32,
+      iterations: 1000
+    });
+
+    // Gera salt aleatório para o IV e uma chave usando a senha Admin
+    var saltIv = CryptoJS.lib.WordArray.random(128 / 8); 
+    var iv = Pbkdf2("qwey123", saltIv, { 
+      keySize: 128 / 32,
+      iterations: 1000
+    });
+
+
+    msg.encrypted = encrypt(newMsg, keyAes, iv);
+    msg.macMsg = SHA256(msg.encrypted.toString(), keyHMac);
+    msg.saltAes = saltAes;
+    msg.saltHMac = saltHMac;
+    msg.saltIv = saltIv
+
+// Envia a mensagem criptografada juntamente com os 3 Salts gerados e o HMAC da mensagem
+    setMsgs([...msgs, msg]); 
     ref.current.value = '';
     setNewMsg('');
   }
 
-  const encrypt = (msg) => {
-    // encrypt
+  const encrypt = (msg, key, iv) => {
+    // Criptografa a mensagem usando AES com a chave e o IV gerados
     return AES.encrypt(msg, key, {
       mode: CTR,
       iv: iv,
@@ -34,9 +59,30 @@ const Chat = ({ msgs, setMsgs, name }) => {
   };
 
   const decipher = (msg) => {
-    const newMac = SHA256(msg.encrypted.toString(), key);
+    //Decriptografa a mensagem
+    console.log(msg);
+    //Gera as Keys e IVs usando os salts recebidos + a senha admin
+    var keyAes = Pbkdf2("qwey123", msg.saltAes, {
+      keySize: 128 / 32,
+      iterations: 1000
+    });
+    var keyHMac = Pbkdf2("qwey123", msg.saltHMac, {
+      keySize: 128 / 32,
+      iterations: 1000
+    });
+    var iv = Pbkdf2("qwey123", msg.saltIv, {
+      keySize: 128 / 32,
+      iterations: 1000
+    });
+
+    //Gera um HMac usando a Key gerada
+    const newMac = SHA256(msg.encrypted.toString(), keyHMac);
+
+    //Compara o HMac recebido com o HMac gerado
     if(JSON.stringify(newMac.words) !== JSON.stringify(msg.macMsg.words)) return 'Erro na mensagem';
-    const decryptedData = AES.decrypt(msg.encrypted, key, {
+
+    //Decifra a mensagem usando a Chave Gerada caso o HMAc seja válido
+    const decryptedData = AES.decrypt(msg.encrypted, keyAes, {
       mode: CTR,
       iv: iv,
       padding: NoPadding
