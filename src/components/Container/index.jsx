@@ -7,8 +7,12 @@ const Container = () => {
 
   return (
       <>
+      <div>
         <Chat msgs={msgs} setMsgs={setMsgs} name="Bob: " />
+      </div>
+      <div>
         <Chat msgs={msgs} setMsgs={setMsgs} name="Alice: " />
+      </div>
       </>
    );
 };

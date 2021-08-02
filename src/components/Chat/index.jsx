@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef } from 'react';
 import CryptoJS from 'crypto-js';
 import Pbkdf2 from 'crypto-js/pbkdf2';
 import  SHA256 from 'crypto-js/sha256';
@@ -6,10 +6,10 @@ import AES from 'crypto-js/aes';
 import CTR from 'crypto-js/mode-ctr';
 import NoPadding from 'crypto-js/pad-zeropadding';
 import Hex from 'crypto-js/enc-hex';
+import _ from 'lodash';
 import UTF8 from 'crypto-js/enc-utf8';
 
 const Chat = ({ msgs, setMsgs, name }) => {
-  const [newMsg, setNewMsg] = useState('');
   const ref = useRef(null);
   const sendMsg = (event) => {
     event.preventDefault();
@@ -37,7 +37,7 @@ const Chat = ({ msgs, setMsgs, name }) => {
     });
 
 
-    msg.encrypted = encrypt(newMsg, keyAes, iv);
+    msg.encrypted = encrypt(name+event.target[0].value, keyAes, iv);
     msg.macMsg = SHA256(msg.encrypted.toString(), keyHMac);
     msg.saltAes = saltAes;
     msg.saltHMac = saltHMac;
@@ -46,7 +46,6 @@ const Chat = ({ msgs, setMsgs, name }) => {
 // Envia a mensagem criptografada juntamente com os 3 Salts gerados e o HMAC da mensagem
     setMsgs([...msgs, msg]); 
     ref.current.value = '';
-    setNewMsg('');
   }
 
   const encrypt = (msg, key, iv) => {
@@ -89,15 +88,18 @@ const Chat = ({ msgs, setMsgs, name }) => {
     return decryptedData.toString(UTF8);
   }
 
+  // const handleChange = _.throttle((s) => { setNewMsg(name+s.target.value) }, 1000)
+
   return (
       <>
+        <div>{`Chat da(o) ${name}`}</div>
         <ul>
             { msgs.length > 0 && (
                 msgs.map(msg => (<li key={decipher(msg)+Math.random()}>{decipher(msg)}</li>))
             )}
         </ul>
         <form onSubmit={(event) => sendMsg(event)}>
-            <input type="text" ref={ref} required onChange={(s) => setNewMsg(name+s.target.value)}></input>
+            <input type="text" ref={ref} required></input>
         </form>
       </>
    );
