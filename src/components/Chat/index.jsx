@@ -5,7 +5,6 @@ import  SHA256 from 'crypto-js/sha256';
 import AES from 'crypto-js/aes';
 import CTR from 'crypto-js/mode-ctr';
 import NoPadding from 'crypto-js/pad-zeropadding';
-import _ from 'lodash';
 import UTF8 from 'crypto-js/enc-utf8';
 
 const Chat = ({ msgs, setMsgs, name }) => {
@@ -86,8 +85,6 @@ const Chat = ({ msgs, setMsgs, name }) => {
     });
     return decryptedData.toString(UTF8);
   }
-
-  // const handleChange = _.throttle((s) => { setNewMsg(name+s.target.value) }, 1000)
 
   return (
       <>
