@@ -60,7 +60,6 @@ const Chat = ({ msgs, setMsgs, name }) => {
 
   const decipher = (msg) => {
     //Decriptografa a mensagem
-    console.log(msg);
     //Gera as Keys e IVs usando os salts recebidos + a senha admin
     var keyAes = Pbkdf2("qwey123", msg.saltAes, {
       keySize: 128 / 32,
